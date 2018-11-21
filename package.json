@@ -1,0 +1,41 @@
+{
+  "name": "cli-explorer",
+  "description": "State-driven explorer for command line interfaces",
+  "version": "0.0.0",
+  "homepage": "https://github.com/paulpflug/",
+  "author": {
+    "name": "Paul Pflugradt",
+    "email": "paul.pflugradt@gmail.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/paulpflug/cli-explorer"
+  },
+  "engines": {
+    "node": "*"
+  },
+  "main": "lib/cli-explorer.js",
+  "files": [
+    "lib/"
+  ],
+  "devDependencies": {
+    "coffee-loader": "^0.9.0",
+    "coffeescript": "^2.3.2",
+    "snapy": "^0.1.6"
+  },
+  "keywords": [],
+  "readmeFilename": "README.md",
+  "scripts": {
+    "build": "coffee --bare --no-header --compile --output lib/ src/*.coffee",
+    "test": "snapy",
+    "test:watch": "snapy --watch",
+    "preversion": "npm run test",
+    "version": "npm run build && git add .",
+    "postversion": "git push && git push --tags && npm publish"
+  },
+  "dependencies": {
+    "hook-up": "^0.2.4",
+    "keypress": "^0.2.1"
+  }
+}
