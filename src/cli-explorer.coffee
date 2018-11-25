@@ -6,19 +6,29 @@ _plugins = [
   "Print"
   "List"
   "Action"
+  "Output"
 ]
 
 module.exports = (ceInst) =>
+  error = ceInst.error = (desc) => new Error "Cli-explorer: #{desc}"
 
   if not ceInst.onSelect? or typeof ceInst.onSelect != "function"
-    throw new Error "Cli-explorer: no onSelect function provided"
+    throw error "no onSelect function provided"
 
   hookUp ?= require "hook-up"
   ceInst.chalk = chalk ?= require "chalk"
   ceInst.readline = readline ?= require "readline"
 
   hookUp ceInst,
-    actions: ["start", "_stop", "print", "clear", "input", "action", "cleanState", "select"]
+    actions: ["start", "_stop", "print", "clear", "input", "action", "select"]
+    catch: start: (e, ceInst) =>
+      delete ceInst._done
+      try
+        await ceInst._stop()
+      throw e
+    state:
+      start: "starting"
+      stop: "stopping"
   
   ceInst.stdin ?= process.stdin
   ceInst.stdout ?= process.stdout
@@ -27,16 +37,12 @@ module.exports = (ceInst) =>
 
   ceInst.keyMap =
     select: ["return", "space"]
-    quit: ["esc"]
     back: ["backspace"]
     right: ["d", "right"]
     left: ["a", "left"]
     up: ["w", "up"]
     down: ["s", "down"]
-
-  ceInst.disabled ?= []
-  if not Array.isArray(ceInst.disabled)
-    throw new Error "Cli-explorer: disabled option must be of type Array"
+    quit: ["q", "escape"]
 
   worker = []
   for plugin in _plugins
@@ -47,28 +53,35 @@ module.exports = (ceInst) =>
         worker.push plugin(ceInst)
       else
         worker.push require(plugin)(ceInst)
+  
   await Promise.all worker
 
   {position, start, _stop} = ceInst
   start.hookIn position.init, (sState, ceInst) =>
-    if ceInst.done
-      throw new Error "Cli-explorer: Unable to start: Instance already started"
-    ceInst.done = new Promise (resolve) => ceInst._done = resolve
+    if ceInst.done?
+      throw error "Unable to start: Instance already started"
+    ceInst.done = new Promise (resolve, reject) => ceInst._done = resolve
     ceInst.state = {selection: []}
 
   _stop.hookIn position.end, (ceInst) =>
-    if ceInst.done?
+    if ceInst._done?
       {state} = ceInst
       ceInst._done(selection: state.selection, cursor: state.cursor)
+      delete ceInst._done
       delete ceInst.done
-
-  ceInst.stop = ({done, _stop}) => 
+      
+  ceInst.stop = ((ceInst, ignore) => 
+    {done, _stop} = ceInst
     if done?
       _stop().then => return done
     else
-      Promise.reject new Error "Cli-explorer: Unable to stop: Instance not started."
-
+      unless ignore
+        return Promise.reject error "Unable to stop: Instance not started."
+      return Promise.resolve()
+    ).bind(null, ceInst)
+  
   await start(selection: ceInst.selection, cursor: ceInst.cursor)
+  
   delete ceInst.selection
   delete ceInst.cursor
 

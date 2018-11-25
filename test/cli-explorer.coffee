@@ -65,9 +65,9 @@ test (snap) =>
     stdout: new StreamMock
     stdin: false
     onSelect: (state, ceInst) =>
-      state.print = lines: ["custom line"], question: "Question?", addUsage: "addUsage"
+      state.print = lines: ["custom line"], question: "Question?"
   .then ({stdout}) =>
-    # print test - should output lines: "custom line", "Question?", "addUsage"
+    # print test - should output lines: "custom line", "Question?"
     snap obj: stdout.data.join("\n")
     return
 
@@ -76,7 +76,7 @@ test (snap) =>
     stdout: new StreamMock
     stdin: false
     onSelect: (state, ceInst) =>
-      state.disabled = ["select"]
+      state.options = false
       state.onPrint = (pState) =>
         pState.lines = ["custom lines"]
         

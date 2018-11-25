@@ -1,4 +1,4 @@
-module.exports = ({start, stop, clear, print, input, position, stdin, cleanState, keyMap}) =>
+module.exports = ({start, stop, clear, print, input, position, stdin, select, keyMap}) =>
   if stdin
     keypress = require "keypress"
 
@@ -16,8 +16,9 @@ module.exports = ({start, stop, clear, print, input, position, stdin, cleanState
       stdin.on "keypress", (ch, key) =>
         input key if key?
       stdin.setRawMode?(true)
+      stdin.resume()
     
-    clear.hookIn => stdin.pause()
+    clear.hookIn =>  stdin.pause()
 
     print.hookIn position.end, => stdin.resume()
 
@@ -28,16 +29,15 @@ module.exports = ({start, stop, clear, print, input, position, stdin, cleanState
       else 
         if (onInput = ceInst.state.onInput)?
           return unless (key = await onInput key, ceInst)
-          key
-        if (onInput = ceInst.onInput)?
-          return unless (key = await onInput key, ceInst)
         {name, ctrl} = key
-        if name == "esc"
-          ceInst._stop()
-        else if (action = actionLookup[name])?
-          aState = state: ceInst.state
-          aState[action] = true
-          ceInst.action(aState)
+        action = actionLookup[name]
+        if action?
+          if action == "quit"
+            ceInst._stop()
+          else
+            aState = state: ceInst.state
+            aState.input = action
+            ceInst.action(aState)
     
-    cleanState.hookIn (state) => 
+    select.hookIn (state) => 
       delete state.onInput

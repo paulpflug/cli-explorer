@@ -56,9 +56,6 @@ selection | Array | - | Selection for initialization
 cursor | String | - | Cursor for initialization
 stdin | Stream | process.stdin | Stream to listen for input
 stdout | Stream | process.stdout | Stream for output
-onInput | Function(key, ceInst) | - | Global input cb
-onPrint | Function(printState, ceInst) | - | Global print cb
-disabled | Array | [] | Globally disabled actions
 plugins | Array | - | Plugins to load, absolute Path or js functions allowed
 
 #### state
@@ -70,11 +67,7 @@ cliExplorer({
     // available options
     // set to false if there are none
     state.options 
-    state.print // printState, see below
-    state.onInput // onInput cb only for current selection
-    state.onPrint // onPrint cb only for current selection
-    state.actions // Array of additional actions
-    state.disabled // Array of disabled actions
+    state.print // printState, see belown
   }
 })
 ```
@@ -87,11 +80,6 @@ cliExplorer({
     state.print = {
       lines: ["first line"], // set array of printed lines
       question: "Question?", // print a question above options
-      // append additional usage
-      addUsage: "someAction[z]",
-      // to merge with default keymap:
-      keys:
-        exit: ["q"] // will result in exit[esc/q]
     }
   }
 })
@@ -126,16 +114,41 @@ cliExplorer({
     }
     state.print = {
       prefix: [" ",">"],
-      postfix: [" ",">"]
+      postfix: [" ","<"]
       maxLength: 80 // line length
     }
   }
 })
 ```
 
+#### output
+```js
+cliExplorer({
+  onSelect: (state, ceInst) => {
+    state.type = "output"
+    state.print = {
+      lines: [
+        "some",
+        "lines
+      ]
+    }
+  }
+})
+```
 #### Write your own Plugins
 
 Have a look at the source of the list / inlineList plugin, it is very easy.
+
+```js
+cliExplorer({
+  plugins: [
+    ({select, action, print, position}) => {
+        ...
+      },
+    ...
+  ]
+})
+```
 
 ## License
 Copyright (c) 2018 Paul Pflugradt

@@ -1,11 +1,24 @@
+isValid = (state) => state.type == "inlineList"
+
 module.exports = ({action, print, select, position, chalk}) =>
 
   _prefix = [" ", chalk.underline(">")]
   _postfix = [" ",chalk.underline("<")]
 
+  select.hookIn position.after, (state) =>
+    if isValid(state)
+      state.addAction("prev")
+      state.addAction("next")
+
+  action.hookIn position.before, (aState) =>
+    if isValid(aState.state)
+      switch aState.input
+        when "right" then aState.go "next"
+        when "left" then aState.go "prev"
+
   print.hookIn (pState, {chalk}) =>
     {state} = pState
-    if state.type == "inlineList"
+    if isValid(state = pState.state)
       pState.addKeys(
         prev: ["A","←"]
         next: ["D","→"]
@@ -29,15 +42,3 @@ module.exports = ({action, print, select, position, chalk}) =>
               tmp = "⤷ "+tmp
             string = tmp
         lines.push string
-
-  action.hookIn position.before, (aState) =>
-    if aState.state.type == "inlineList"
-      if aState.right
-        aState.next = true
-      else if aState.left
-        aState.prev = true
-
-  select.hookIn position.after, (state) =>
-    if state.type == "inlineList"
-      state.addAction("prev")
-      state.addAction("next")
